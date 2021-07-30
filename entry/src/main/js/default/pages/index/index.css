@@ -86,7 +86,7 @@
     text-align: center;
     width: 100%;
     padding-bottom: 30px;
-/*    text-color: black;*/
+
 }
 
 .title1{
@@ -119,7 +119,7 @@
 .allbutton1 {
     width: 240px;
     height: 70px;
-    margin-left: 125px;
+    margin-left: 110px;
     margin-top: 30px;
     border-radius: 50px;
     background-color: #0A9AFD;
@@ -128,28 +128,56 @@
 .button1{
     width: 240px;
     height: 70px;
+    border-radius: 50px;
     text-align: center;
     font-size: 36px;
-    text-color: white;
+    color: white;
 }
 
 .allbutton2 {
     width: 240px;
     height: 70px;
-    font-size: 23px;
     text-align: center;
     margin-left: 40px;
     margin-top: 30px;
     border-radius: 50px;
     background-color: #0A9AFD;
-    text-color: white;
+
 }
 
 .button2{
+    color: white;
     width: 240px;
     height: 70px;
+    border-radius: 50px;
     text-align: center;
     font-size: 36px;
+
 }
+
+.dialog-main {
+    width: 500px;
+}
+.dialog-div {
+    flex-direction: column;
+    align-items: center;
+}
+.inner-txt {
+    width: 400px;
+    height: 160px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+}
+.inner-btn {
+    width: 400px;
+    height: 120px;
+    justify-content: space-around;
+    align-items: center;
+}
+
+
+
+
 
 
