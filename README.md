@@ -43,5 +43,5 @@ Update subsystem
 
 **update\_app**
 
-update\_updateservice
+[update\_updateservice](https://gitee.com/openharmony/update_updateservice)
 
