@@ -20,7 +20,7 @@ import client from '@ohos.update';
 const HAS_NEW_VERSION = 1;
 const NO_NEW_VERSION = 0;
 const PACKAGE_NAME = "com.hmos.ouc";
-const VENDOR = "huawei";
+const VENDOR = "public";
 const TAG = "OUC_DEMO ";
 let upgradeInfo = {
     upgradeApp: PACKAGE_NAME,
