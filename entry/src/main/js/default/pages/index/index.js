@@ -13,13 +13,14 @@
  * limitations under the License.
  */
 
-import prompt from '@system.prompt'
-import app from '@system.app';
+import prompt from '@ohos.prompt'
+import app from '@ohos.ability.featureAbility';
 import client from '@ohos.update';
 
 const HAS_NEW_VERSION = 1;
 const NO_NEW_VERSION = 0;
-const PACKAGE_NAME = "com.hmos.ouc";
+const STATUS_CHECK_SUCCESS = 12;
+const PACKAGE_NAME = "com.ohos.ota.updateclient";
 const VENDOR = "public";
 const TAG = "OUC_DEMO ";
 let upgradeInfo = {
@@ -87,7 +88,7 @@ const page = {
             this.download()
         } else if (this.pageType == "lastVersion") { // 已经是最新的版本了，单击后退出页面
             page.data.showLoad = "";
-            app.terminate();
+            app.terminateSelf();
         } else if (page.data.pageType == "checkVersion") { // 检查中，取消检查
             page.data.showSimpledialog = "simpledialog";
             this.$element('simpledialog').show();
@@ -98,11 +99,11 @@ const page = {
             this.$element('simpledialog').show();
             temp = 1;
         } else if (page.data.pageType == "errorPage") { // 出错，退出
-            app.terminate();
+            app.terminateSelf();
         }
     },
     download() {
-        console.info(TAG + "download")
+        console.info(TAG + "download");
         page.data.updater.on(eventClassifyInfo, eventInfo => {
             console.info(TAG + "download eventInfo: " + JSON.stringify(eventInfo))
             if (page.data.pageType != "downVersion") {
@@ -180,7 +181,7 @@ const page = {
         page.data.updater.getTaskInfo().then(taskInfo => {
             console.info(TAG + "getTaskInfo result: " + JSON.stringify(taskInfo));
             let taskStatus = taskInfo?.taskBody?.status;
-            if (taskStatus < 12) {
+            if (taskStatus < STATUS_CHECK_SUCCESS) {
                 this.checkNewVersionLocal();
             } else {
                 this.getNewVersionInfoLocal();
@@ -339,23 +340,23 @@ const page = {
 }
 
 var EventId = {
-    EVENT_TASK_BASE: 0,
-    EVENT_TASK_RECEIVE: 1,
-    EVENT_TASK_CANCEL: 2,
-    EVENT_DOWNLOAD_WAIT: 3,
-    EVENT_DOWNLOAD_START: 4,
-    EVENT_PROGRESS_UPDATE: 5,
-    EVENT_DOWNLOAD_PAUSE: 6,
-    EVENT_DOWNLOAD_RESUME: 7,
-    EVENT_DOWNLOAD_SUCCESS: 8,
-    EVENT_DOWNLOAD_FAIL: 9,
-    EVENT_UPGRADE_WAIT: 10,
-    EVENT_UPGRADE_START: 11,
-    EVENT_UPGRADE_UPDATE: 12,
-    EVENT_APPLY_WAIT: 13,
-    EVENT_APPLY_START: 14,
-    EVENT_UPGRADE_SUCCESS: 15,
-    EVENT_UPGRADE_FAIL: 16
+    EVENT_TASK_BASE: 0x01000000,
+    EVENT_TASK_RECEIVE: 0x01000001,
+    EVENT_TASK_CANCEL: 0x01000002,
+    EVENT_DOWNLOAD_WAIT: 0x01000003,
+    EVENT_DOWNLOAD_START: 0x01000004,
+    EVENT_PROGRESS_UPDATE: 0x01000005,
+    EVENT_DOWNLOAD_PAUSE: 0x01000006,
+    EVENT_DOWNLOAD_RESUME: 0x01000007,
+    EVENT_DOWNLOAD_SUCCESS: 0x01000008,
+    EVENT_DOWNLOAD_FAIL: 0x01000009,
+    EVENT_UPGRADE_WAIT: 0x01000010,
+    EVENT_UPGRADE_START: 0x01000011,
+    EVENT_UPGRADE_UPDATE: 0x01000012,
+    EVENT_APPLY_WAIT: 0x01000013,
+    EVENT_APPLY_START: 0x01000014,
+    EVENT_UPGRADE_SUCCESS: 0x01000015,
+    EVENT_UPGRADE_FAIL: 0x01000016
 }
 
 export default page;
