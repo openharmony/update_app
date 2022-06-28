@@ -1,7 +1,7 @@
 {
   "app": {
     "bundleName": "com.ohos.ota.updateclient",
-    "vendor": "runhe",
+    "vendor": "ohos",
     "version": {
       "code": 1,
       "name": "1.0"
