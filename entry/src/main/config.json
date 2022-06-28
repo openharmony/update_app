@@ -1,20 +1,20 @@
 {
   "app": {
-    "bundleName": "com.runhe.ota.updateclient",
-    "vendor": "runhe",
+    "bundleName": "com.ohos.ota.updateclient",
+    "vendor": "ohos",
     "version": {
       "code": 1,
       "name": "1.0"
     },
     "apiVersion": {
-      "compatible": 4,
-      "target": 4,
+      "compatible": 8,
+      "target": 8,
       "releaseType": "Beta2"
     }
   },
   "deviceConfig": {},
   "module": {
-    "package": "com.runhe.ota.updateclient",
+    "package": "com.ohos.ota.updateclient",
     "name": ".MyApplication",
     "deviceType": [
       "phone"
@@ -37,7 +37,7 @@
             ]
           }
         ],
-        "name": "com.runhe.ota.updateclient.MainAbility",
+        "name": "com.ohos.ota.updateclient.MainAbility",
         "icon": "$media:icon",
         "description": "$string:mainability_description",
         "label": "updateclient",
