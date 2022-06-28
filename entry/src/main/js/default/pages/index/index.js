@@ -31,7 +31,7 @@ let upgradeInfo = {
     }
 }
 let eventClassifyInfo = {
-    eventClassify: 0x01000000,
+    eventClassify: EventId.EVENT_TASK_BASE,
     extraInfo: ""
 }
 var temp = 0;
