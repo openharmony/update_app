@@ -190,47 +190,47 @@ const page = {
 
     checkNewVersionLocal() {
         page.data.updater.checkNewVersion().then(data => {
-                console.info(TAG + "checkNewVersion result: " + JSON.stringify(data));
-                if (data.isExistNewVersion == NO_NEW_VERSION) { // 已经最新
-                    page.data.title = "当前已经是最新版本";
-                    page.data.button = "确定";
-                    page.data.pageType = "lastVersion";
-                    page.data.versionName = data?.newVersionInfo?.versionComponents?.[0]?.displayVersion;
-                } else if (data.isExistNewVersion == HAS_NEW_VERSION) {
-                    page.data.button = "查看更新";
-                    page.data.pageType = "currVersion";
-                    page.data.versionName = data?.newVersionInfo?.versionComponents?.[0]?.displayVersion;
-                } else {
-                    page.data.title = "获取新版本失败";
-                }
-            }).catch(error => {
-                console.info(TAG + "checkNewVersion error: " + JSON.stringify(error));
-                page.data.pageType = "errorPage";
-                page.data.showButton = 'download';
-                page.data.button = '退出';
-                page.data.title = "检查新版本失败";
-                if (error.errorNum) {
-                    page.data.title = "检查新版本失败，失败原因：" + error.errorNum;
-                }
-            });
+            console.info(TAG + "checkNewVersion result: " + JSON.stringify(data));
+            if (data.isExistNewVersion == NO_NEW_VERSION) { // 已经最新
+                page.data.title = "当前已经是最新版本";
+                page.data.button = "确定";
+                page.data.pageType = "lastVersion";
+                page.data.versionName = data?.newVersionInfo?.versionComponents?.[0]?.displayVersion;
+            } else if (data.isExistNewVersion == HAS_NEW_VERSION) {
+                page.data.button = "查看更新";
+                page.data.pageType = "currVersion";
+                page.data.versionName = data?.newVersionInfo?.versionComponents?.[0]?.displayVersion;
+            } else {
+                page.data.title = "获取新版本失败";
+            }
+        }).catch(error => {
+            console.info(TAG + "checkNewVersion error: " + JSON.stringify(error));
+            page.data.pageType = "errorPage";
+            page.data.showButton = 'download';
+            page.data.button = '退出';
+            page.data.title = "检查新版本失败";
+            if (error.errorNum) {
+                page.data.title = "检查新版本失败，失败原因：" + error.errorNum;
+            }
+        });
     },
 
     getNewVersionInfoLocal() {
         page.data.updater.getNewVersionInfo().then(data => {
-                console.info(TAG + "getNewVersionInfo result: " + JSON.stringify(data));
-                page.data.button = "查看更新";
-                page.data.pageType = "currVersion";
-                page.data.versionName = data?.versionComponents?.[0]?.displayVersion;
-            }).catch(error => {
-                console.info(TAG + "getNewVersionInfo error: " + JSON.stringify(error));
-                page.data.pageType = "errorPage";
-                page.data.showButton = 'download';
-                page.data.button = '退出';
-                page.data.title = "检查新版本失败";
-                if (error.errorNum) {
-                    page.data.title = "检查新版本失败，失败原因：" + error.errorNum;
-                }
-            });
+            console.info(TAG + "getNewVersionInfo result: " + JSON.stringify(data));
+            page.data.button = "查看更新";
+            page.data.pageType = "currVersion";
+            page.data.versionName = data?.versionComponents?.[0]?.displayVersion;
+        }).catch(error => {
+            console.info(TAG + "getNewVersionInfo error: " + JSON.stringify(error));
+            page.data.pageType = "errorPage";
+            page.data.showButton = 'download';
+            page.data.button = '退出';
+            page.data.title = "检查新版本失败";
+            if (error.errorNum) {
+                page.data.title = "检查新版本失败，失败原因：" + error.errorNum;
+            }
+        });
     },
 
     checkNewVersion: function () {
