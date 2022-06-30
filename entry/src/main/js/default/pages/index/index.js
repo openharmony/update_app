@@ -13,17 +13,52 @@
  * limitations under the License.
  */
 
-import prompt from '@system.prompt'
-import app from '@system.app';
+import prompt from '@ohos.prompt'
+import app from '@ohos.ability.featureAbility';
 import client from '@ohos.update';
-const HAS_NEW_VERSION = 0;
-const NO_NEW_VERSION = 1;
-const UPDATE_STATE_DOWNLOAD_FAIL = 23
-const UPDATE_STATE_DOWNLOAD_SUCCESS = 24;
-const UPDATE_STATE_VERIFY_FAIL = 31;
-const UPDATE_STATE_VERIFY_SUCCESS = 32;
-var temp=0;
-const page= {
+
+const HAS_NEW_VERSION = 1;
+const NO_NEW_VERSION = 0;
+const STATUS_CHECK_SUCCESS = 12;
+const PACKAGE_NAME = "com.ohos.ota.updateclient";
+const VENDOR = "public";
+const TAG = "OUC_DEMO ";
+var EventId = {
+    EVENT_TASK_BASE: 0x01000000,
+    EVENT_TASK_RECEIVE: 0x01000001,
+    EVENT_TASK_CANCEL: 0x01000002,
+    EVENT_DOWNLOAD_WAIT: 0x01000003,
+    EVENT_DOWNLOAD_START: 0x01000004,
+    EVENT_PROGRESS_UPDATE: 0x01000005,
+    EVENT_DOWNLOAD_PAUSE: 0x01000006,
+    EVENT_DOWNLOAD_RESUME: 0x01000007,
+    EVENT_DOWNLOAD_SUCCESS: 0x01000008,
+    EVENT_DOWNLOAD_FAIL: 0x01000009,
+    EVENT_UPGRADE_WAIT: 0x01000010,
+    EVENT_UPGRADE_START: 0x01000011,
+    EVENT_UPGRADE_UPDATE: 0x01000012,
+    EVENT_APPLY_WAIT: 0x01000013,
+    EVENT_APPLY_START: 0x01000014,
+    EVENT_UPGRADE_SUCCESS: 0x01000015,
+    EVENT_UPGRADE_FAIL: 0x01000016
+}
+let upgradeInfo = {
+    upgradeApp: PACKAGE_NAME,
+    businessType: {
+        vendor: VENDOR,
+        subType: 1
+    }
+}
+let eventClassifyInfo = {
+    eventClassify: EventId.EVENT_TASK_BASE,
+    extraInfo: ""
+}
+var temp = 0;
+let versionDigestInfo;
+let pauseDownloadOptions = {
+    isAllowAutoResume: false
+}
+const page = {
     data: {
         title: "当前版本:10.2.1",
         button: "查看更新",
@@ -37,29 +72,31 @@ const page= {
         showBanner: "",
         showButton: "download",
         upgradeInfo: "",
-        updater: undefined,
+        updater: Object(),
         timer: undefined,
-        dialog:"",
-        showSimpledialog:""
+        dialog: "",
+        showSimpledialog: ""
     },
     onInit() {
+        console.info(TAG + "onInit")
         try {
-            page.data.updater = client.getUpdater('/data/updater/updater.zip', 'OTA');
+            page.data.updater = client.getOnlineUpdater(upgradeInfo);
             page.getCurrVersion();
-        } catch(error) {
+        } catch (error) {
+            console.error(TAG + "onInit error: " + JSON.stringify(error));
         }
     },
-    onClick: function() {
+    onClick: function () {
         if (page.data.pageType == "currVersion") { // 检查更新版本
             page.data.pageType = "checkVersion";
             page.data.button = "取消查看";
             page.data.showLoad = "load";
             page.checkNewVersion();
-        }  else if (page.data.pageType == "newVersion") { // 当前需要下载最新的版本
+        } else if (page.data.pageType == "newVersion") { // 当前需要下载最新的版本
             page.data.pageType = "downVersion";
             page.data.showLoad = "load";
             page.data.showBanner = 'banner';
-            page.data.button = "取消下载";
+            page.data.button = "暂停下载";
             if (page.data.updater == undefined) {
                 page.data.pageType = "errorPage";
                 page.data.showButton = 'download';
@@ -68,51 +105,54 @@ const page= {
                 return;
             }
             this.download()
-        } else if ( this.pageType == "lastVersion") { // 已经是最新的版本了，单击后退出页面
+        } else if (this.pageType == "lastVersion") { // 已经是最新的版本了，单击后退出页面
             page.data.showLoad = "";
-            app.terminate();
+            app.terminateSelf();
         } else if (page.data.pageType == "checkVersion") { // 检查中，取消检查
-            page.data.showSimpledialog="simpledialog";
+            page.data.showSimpledialog = "simpledialog";
             this.$element('simpledialog').show();
-            page.data.dialog="是否取消检查";
+            page.data.dialog = "是否取消检查";
         } else if (page.data.pageType == "downVersion") { // 下载中，取消下载
-            page.data.showSimpledialog="simpledialog";
-            page.data.dialog="是否取消下载";
+            page.data.showSimpledialog = "simpledialog";
+            page.data.dialog = "是否暂停下载！";
             this.$element('simpledialog').show();
-            temp=1;
+            temp = 1;
         } else if (page.data.pageType == "errorPage") { // 出错，退出
-            app.terminate();
+            app.terminateSelf();
         }
     },
     download() {
-        page.data.updater.on("downloadProgress", progress => {
+        console.info(TAG + "download");
+        page.data.updater.on(eventClassifyInfo, eventInfo => {
+            console.info(TAG + "download eventInfo: " + JSON.stringify(eventInfo))
             if (page.data.pageType != "downVersion") {
                 return;
+            }
+            let progress = {
+                status: eventInfo.taskBody?.status,
+                percent: eventInfo.taskBody?.progress,
+                endReason: eventInfo.taskBody?.errorMessages?.[0]?.errorCode?.toString()
             }
             let percent = progress.percent;
             if (progress.percent > 5) {
                 percent = progress.percent - 5;
-            }else if(progress.percent>90){
+            } else if (progress.percent > 90) {
                 percent = 90;
             }
             page.data.width = percent + '%';
             if (progress.percent == 100) {
                 page.data.showLoad = "";
                 page.data.showBanner = '';
-                if(temp==1){
+                if (temp == 1) {
                     this.$element('simpledialog').close();
                 }
-
             }
             // 下载成功 UpdateState.UPDATE_STATE_DOWNLOAD_SUCCESS
-            if (progress.status == UPDATE_STATE_DOWNLOAD_SUCCESS ||
-                progress.status == UPDATE_STATE_VERIFY_SUCCESS) {
+            if (eventInfo.eventId == EventId.EVENT_DOWNLOAD_SUCCESS) {
                 page.data.pageType = "downSuccess";
                 page.data.showButton = "upgrade";
-                page.data.upgradeInfo =  page.data.versionName + "安装包下载完成，是否安装？";
-                page.data.updater.off("downloadProgress");
-            } else if (progress.status == UPDATE_STATE_DOWNLOAD_FAIL ||
-                progress.status == UPDATE_STATE_VERIFY_FAIL) { // 失败
+                page.data.upgradeInfo = page.data.versionName + "安装包下载完成，是否安装？";
+            } else if (eventInfo.eventId == EventId.EVENT_DOWNLOAD_FAIL) { // 失败
                 page.data.pageType = "errorPage";
                 page.data.showButton = 'download';
                 page.data.button = '退出';
@@ -120,26 +160,34 @@ const page= {
                 if (progress.endReason) {
                     page.data.title = "下载失败，失败原因：" + progress.endReason;
                 }
-                page.data.updater.off("downloadProgress");
             }
         });
-        page.data.updater.download();
+        let downloadOptions = {
+            allowNetwork: 1,
+            order: 1
+        }
+        page.data.updater.download(versionDigestInfo, downloadOptions).then(result => {
+            console.info(TAG + "download result: " + JSON.stringify(result));
+        }).catch(err => {
+            console.error(TAG + "download err: " + JSON.stringify(err));
+        });
     },
-    clickInstall: function() {
+    clickInstall: function () {
         if (page.data.pageType == "downSuccess") { // 下载成功，开始升级
             page.upgrade();
         }
     },
 
-    clickCancel: function() {
+    clickCancel: function () {
         if (page.data.pageType == "downSuccess") { // 下载成功，取消升级
-            page.data.showSimpledialog="simpledialog";
-            page.data.dialog="是否稍后安装";
+            page.data.showSimpledialog = "simpledialog";
+            page.data.dialog = "是否稍后安装";
             this.$element('simpledialog').show();
         }
     },
 
     getCurrVersion() {
+        console.info(TAG + "getCurrVersion");
         if (page.data.updater == undefined) {
             page.data.pageType = "errorPage";
             page.data.showButton = 'download';
@@ -147,82 +195,128 @@ const page= {
             page.data.title = "初始化出现错误，退出app";
             return;
         }
-        try {
-            // 获取版本信息
-            page.data.updater.getNewVersionInfo(function(err, info) {
-                if (info.status == NO_NEW_VERSION) { // 已经最新
-                    page.data.title = "当前已经是最新版本";
-                    page.data.button = "确定";
-                    page.data.pageType = "lastVersion";
-                    page.data.versionName = info.checkResults[0].versionName;
-                } else if (info.status == HAS_NEW_VERSION) {
-                    page.data.button = "查看更新";
-                    page.data.pageType = "currVersion";
-                    page.data.versionName = info.checkResults[0].versionName;
-                } else {
-                    page.data.title = "获取新版本失败";
-                }
-            });
-        } catch(error) {
-            page.data.title = "获取新版本失败";
-        }
+
+        // 获取版本信息
+        page.data.updater.getTaskInfo().then(taskInfo => {
+            console.info(TAG + "getTaskInfo result: " + JSON.stringify(taskInfo));
+            let taskStatus = taskInfo?.taskBody?.status;
+            if (taskStatus < STATUS_CHECK_SUCCESS) {
+                this.checkNewVersionLocal();
+            } else {
+                this.getNewVersionInfoLocal();
+            }
+        });
     },
 
-    checkNewVersion: function() {
-        if (page.data.updater == undefined) {
-            page.data.pageType = "errorPage";
-            page.data.showButton = 'download';
-            page.data.button = '退出';
-            page.data.title = "初始化出现错误，退出app";
-            return;
-        }
-        page.data.updater.checkNewVersion(function(err, info) {
-            page.data.showLoad = "";
-            if (info.status == NO_NEW_VERSION) { // 已经最新
+    checkNewVersionLocal() {
+        page.data.updater.checkNewVersion().then(data => {
+            console.info(TAG + "checkNewVersion result: " + JSON.stringify(data));
+            if (data.isExistNewVersion == NO_NEW_VERSION) { // 已经最新
                 page.data.title = "当前已经是最新版本";
                 page.data.button = "确定";
                 page.data.pageType = "lastVersion";
-            } else if (info.status == HAS_NEW_VERSION) { // 有新版本
-                let size = info.checkResults[0].size / 1024 / 1024;
-                page.data.versionName = info.checkResults[0].versionName;
-                page.data.size = String(size.toFixed(2)) + "MB";
-                if (info.descriptionInfo[0].content != undefined) {
-                    page.data.journal = info.descriptionInfo[0].content;
-                };
-                page.data.pageType = "newVersion";
-                page.data.button = "下载更新包";
-            } else { // 出错
-                page.data.pageType = "errorPage";
-                page.data.showButton = 'download';
-                page.data.button = '退出';
-                page.data.title = "检查新版本失败";
-                if (info.errMsg) {
-                    page.data.title = "检查新版本失败，失败原因：" + info.errMsg;
-                }
+                page.data.versionName = data?.newVersionInfo?.versionComponents?.[0]?.displayVersion;
+            } else if (data.isExistNewVersion == HAS_NEW_VERSION) {
+                page.data.button = "查看更新";
+                page.data.pageType = "currVersion";
+                page.data.versionName = data?.newVersionInfo?.versionComponents?.[0]?.displayVersion;
+            } else {
+                page.data.title = "获取新版本失败";
+            }
+        }).catch(error => {
+            console.info(TAG + "checkNewVersion error: " + JSON.stringify(error));
+            page.data.pageType = "errorPage";
+            page.data.showButton = 'download';
+            page.data.button = '退出';
+            page.data.title = "检查新版本失败";
+            if (error.errorNum) {
+                page.data.title = "检查新版本失败，失败原因：" + error.errorNum;
+            }
+        });
+    },
+
+    getNewVersionInfoLocal() {
+        page.data.updater.getNewVersionInfo().then(data => {
+            console.info(TAG + "getNewVersionInfo result: " + JSON.stringify(data));
+            page.data.button = "查看更新";
+            page.data.pageType = "currVersion";
+            page.data.versionName = data?.versionComponents?.[0]?.displayVersion;
+        }).catch(error => {
+            console.info(TAG + "getNewVersionInfo error: " + JSON.stringify(error));
+            page.data.pageType = "errorPage";
+            page.data.showButton = 'download';
+            page.data.button = '退出';
+            page.data.title = "检查新版本失败";
+            if (error.errorNum) {
+                page.data.title = "检查新版本失败，失败原因：" + error.errorNum;
+            }
+        });
+    },
+
+    checkNewVersion: function () {
+        if (page.data.updater == undefined) {
+            page.data.pageType = "errorPage";
+            page.data.showButton = 'download';
+            page.data.button = '退出';
+            page.data.title = "初始化出现错误，退出app";
+            return;
+        }
+        console.info(TAG + "checkNewVersion");
+        page.data.updater.getNewVersionInfo().then(info => {
+            console.info(TAG + "checkNewVersion getNewVersionInfo: " + JSON.stringify(info));
+            versionDigestInfo = info?.versionDigestInfo;
+            page.data.showLoad = "";
+            let size = info?.versionComponents?.[0]?.size / 1024 / 1024;
+            page.data.versionName = info?.versionComponents?.[0]?.displayVersion;
+            page.data.size = String(size.toFixed(2)) + "MB";
+            if (info?.versionComponents?.[0]?.descriptionInfo?.content != undefined) {
+                page.data.journal = info?.versionComponents?.[0]?.descriptionInfo?.content;
+            }
+            page.data.pageType = "newVersion";
+            page.data.button = "下载更新包";
+        }).catch(error => {
+            page.data.pageType = "errorPage";
+            page.data.showButton = 'download';
+            page.data.button = '退出';
+            page.data.title = "检查新版本失败";
+            if (error.errorNum) {
+                page.data.title = "检查新版本失败，失败原因：" + error.errorNum;
             }
         });
     },
 
     upgrade() {
-        if ( page.data.updater == undefined) {
+        if (page.data.updater == undefined) {
             page.data.pageType = "errorPage";
             page.data.showButton = 'download';
             page.data.button = '退出';
             page.data.title = "初始化出现错误，退出app";
             return;
         }
-        page.data.updater.on("upgradeProgress", progress => {
+        page.data.updater.on(eventClassifyInfo, eventInfo => {
+            console.info(TAG + "upgrade eventInfo: " + JSON.stringify(eventInfo));
+            let progress = {
+                status: eventInfo.taskBody?.status,
+                percent: eventInfo.taskBody?.progress,
+                endReason: eventInfo.taskBody?.errorMessages?.[0]?.errorCode?.toString()
+            }
             page.data.width = progress.percent + '%';
-            if (progress.status == 3) { // 失败
-                page.data.updater.off("upgradeProgress");
+            if (progress.status == EventId.EVENT_UPGRADE_FAIL) { // 失败
                 page.data.showLoad = "";
                 page.data.pageType = "errorPage";
                 page.data.showButton = 'download';
                 page.data.button = '退出';
-                page.data.title = "升级失败，失败原因：" + progress.endReason ;
+                page.data.title = "升级失败，失败原因：" + progress.endReason;
             }
         });
-        page.data.updater.upgrade();
+        let upgradeOptions = {
+            order: 2
+        }
+        page.data.updater.upgrade(versionDigestInfo, upgradeOptions).then(result => {
+            console.info(TAG + "upgrade result: " + JSON.stringify(result));
+        }).catch(err => {
+            console.error(TAG + "upgrade err: " + JSON.stringify(err));
+        });
     },
 
     closeDialog() {
@@ -245,23 +339,22 @@ const page= {
         prompt.showToast({
             message: '确定成功'
         })
-        if (page.data.pageType == "downVersion"){
-            page.data.updater.cancel();
+        if (page.data.pageType == "downVersion") {
             page.data.showLoad = "";
             page.data.showBanner = '';
             page.data.pageType = "newVersion";
             page.data.button = "下载更新包";
-        }else if(page.data.pageType =="downSuccess"){
+            page.data.updater.pauseDownload(versionDigestInfo, pauseDownloadOptions);
+        } else if (page.data.pageType == "downSuccess") {
             page.data.upgradeInfo = "";
             page.data.showButton = 'download';
             page.data.button = "查看更新";
             page.data.pageType = "currVersion";
             page.getCurrVersion();
-        }else if(page.data.pageType =="checkVersion"){
+        } else if (page.data.pageType == "checkVersion") {
             page.data.button = "检查更新";
             page.getCurrVersion();
         }
-
     }
 }
 
