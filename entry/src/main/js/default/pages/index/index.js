@@ -92,7 +92,7 @@ const page = {
             page.data.button = "取消查看";
             page.data.showLoad = "load";
             page.checkNewVersion();
-        } else if (page.data.pageType == "newVersion") { // 当前需要下载最新的版本
+        } else if (page.data.pageType == "newVersion") { // 当前需要下载新的版本
             page.data.pageType = "downVersion";
             page.data.showLoad = "load";
             page.data.showBanner = 'banner';
@@ -105,7 +105,7 @@ const page = {
                 return;
             }
             this.download()
-        } else if (this.pageType == "lastVersion") { // 已经是最新的版本了，单击后退出页面
+        } else if (this.pageType == "lastVersion") { // 已经是新的版本了，单击后退出页面
             page.data.showLoad = "";
             app.terminateSelf();
         } else if (page.data.pageType == "checkVersion") { // 检查中，取消检查
@@ -211,8 +211,8 @@ const page = {
     checkNewVersionLocal() {
         page.data.updater.checkNewVersion().then(data => {
             console.info(TAG + "checkNewVersion result: " + JSON.stringify(data));
-            if (data.isExistNewVersion == NO_NEW_VERSION) { // 已经最新
-                page.data.title = "当前已经是最新版本";
+            if (data.isExistNewVersion == NO_NEW_VERSION) { // 已经是新版本
+                page.data.title = "当前已经是新版本";
                 page.data.button = "确定";
                 page.data.pageType = "lastVersion";
                 page.data.versionName = data?.newVersionInfo?.versionComponents?.[0]?.displayVersion;
